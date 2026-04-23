@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, type FormEvent } from "react";
 import { Loader2, Sparkles, RotateCcw, Flame, CheckCircle2 } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { FileDropZone } from "@/components/FileDropZone";
 import { ConceptCard } from "@/components/ConceptCard";
 import { supabase } from "@/lib/supabase";
@@ -109,15 +110,18 @@ function Index() {
             </div>
             <span className="font-heading text-lg">Study Assistant</span>
           </div>
-          {plan && (
-            <button
-              onClick={handleReset}
-              className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-accent"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              New plan
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {plan && (
+              <button
+                onClick={handleReset}
+                className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-accent"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                New plan
+              </button>
+            )}
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
