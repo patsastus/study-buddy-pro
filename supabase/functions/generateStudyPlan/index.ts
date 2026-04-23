@@ -135,17 +135,47 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "File upload to Gemini failed." }, 502);
     }
 
-    const result = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: createUserContent([
-        createPartFromUri(uploaded.uri, uploaded.mimeType),
-        buildPrompt(language, focus, depth, level),
-      ]),
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: studyPlanSchema,
-      },
-    });
+    const contents = createUserContent([
+      createPartFromUri(uploaded.uri, uploaded.mimeType),
+      buildPrompt(language, focus, depth, level),
+    ]);
+
+    const generationConfig = {
+      responseMimeType: "application/json",
+      responseSchema: studyPlanSchema,
+    };
+
+    const modelChain = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+    let result: any;
+    let lastError: unknown;
+    outer: for (const model of modelChain) {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          result = await ai.models.generateContent({
+            model,
+            contents,
+            config: generationConfig,
+          });
+          lastError = undefined;
+          break outer;
+        } catch (err: any) {
+          lastError = err;
+          const status = err?.status ?? err?.response?.status;
+          if (status !== 503 && status !== 429 && status !== 500) throw err;
+          await sleep(600 * Math.pow(2, attempt));
+        }
+      }
+    }
+
+    if (lastError) {
+      const message = lastError instanceof Error ? lastError.message : String(lastError);
+      return jsonResponse(
+        { error: "The AI model is overloaded right now. Please try again in a moment.", detail: message },
+        503,
+      );
+    }
 
     const text = result.text;
     if (!text) return jsonResponse({ error: "Empty response from Gemini." }, 502);
