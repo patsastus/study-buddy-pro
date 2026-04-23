@@ -43,7 +43,10 @@ function Index() {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("language", language);
-      formData.append("focus", focus);
+      formData.append(
+        "focus",
+        focus.trim() || "general understanding of the project requirements",
+      );
       formData.append("depth", depth);
       formData.append("level", level);
 
