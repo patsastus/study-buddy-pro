@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
-import { Loader2, Sparkles, RotateCcw } from "lucide-react";
+import { useMemo, useState, type FormEvent } from "react";
+import { Loader2, Sparkles, RotateCcw, Flame, CheckCircle2 } from "lucide-react";
 import { FileDropZone } from "@/components/FileDropZone";
-import { StudyPlanView } from "@/components/StudyPlanView";
-import { QuizzesView } from "@/components/QuizzesView";
+import { ConceptCard } from "@/components/ConceptCard";
 import { supabase } from "@/lib/supabase";
 import type { StudyPlan } from "@/lib/study-plan-types";
 
@@ -26,7 +25,10 @@ function Index() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [plan, setPlan] = useState<StudyPlan | null>(null);
-  const [tab, setTab] = useState<"plan" | "quiz">("plan");
+
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [completed, setCompleted] = useState<Set<number>>(new Set());
+  const [streak, setStreak] = useState(0);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -47,7 +49,6 @@ function Index() {
       });
 
       if (fnError) {
-        // Try to surface the server-provided error message.
         let message = fnError.message;
         try {
           const ctx = (fnError as unknown as { context?: { json?: () => Promise<{ error?: string }> } })
@@ -64,7 +65,9 @@ function Index() {
       if (!data?.plan) throw new Error("Empty response from server.");
 
       setPlan(data.plan as StudyPlan);
-      setTab("plan");
+      setOpenIndex(0);
+      setCompleted(new Set());
+      setStreak(0);
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -76,6 +79,22 @@ function Index() {
   function handleReset() {
     setPlan(null);
     setError(null);
+    setCompleted(new Set());
+    setStreak(0);
+  }
+
+  function handleInteract() {
+    setStreak((s) => s + 1);
+  }
+
+  function handleMarkDone(index: number) {
+    setCompleted((prev) => {
+      if (prev.has(index)) return prev;
+      const next = new Set(prev);
+      next.add(index);
+      return next;
+    });
+    setStreak((s) => s + 1);
   }
 
   return (
@@ -118,7 +137,17 @@ function Index() {
             onSubmit={handleSubmit}
           />
         ) : (
-          <DashboardView plan={plan} tab={tab} setTab={setTab} />
+          <DashboardView
+            plan={plan}
+            language={language}
+            level={level}
+            openIndex={openIndex}
+            setOpenIndex={setOpenIndex}
+            completed={completed}
+            streak={streak}
+            onMarkDone={handleMarkDone}
+            onInteract={handleInteract}
+          />
         )}
       </main>
     </div>
@@ -149,8 +178,8 @@ function SetupView(p: SetupProps) {
           Turn any project brief into a personal study plan
         </h1>
         <p className="mt-3 text-base text-muted-foreground">
-          Upload a project description and we&apos;ll generate the concepts, examples and quizzes
-          you need.
+          Upload a project description and we&apos;ll generate the concepts, examples and quick
+          challenges you need.
         </p>
       </div>
 
@@ -265,57 +294,74 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function DashboardView({
-  plan,
-  tab,
-  setTab,
-}: {
+interface DashboardProps {
   plan: StudyPlan;
-  tab: "plan" | "quiz";
-  setTab: (t: "plan" | "quiz") => void;
-}) {
-  return (
-    <div>
-      <div className="mb-6 inline-flex rounded-lg border border-border bg-card p-1 shadow-soft">
-        <TabButton active={tab === "plan"} onClick={() => setTab("plan")}>
-          Study Plan
-          <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-            {plan.concepts.length}
-          </span>
-        </TabButton>
-        <TabButton active={tab === "quiz"} onClick={() => setTab("quiz")}>
-          Quizzes
-          <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-            {plan.quizzes.length}
-          </span>
-        </TabButton>
-      </div>
-
-      {tab === "plan" ? <StudyPlanView plan={plan} /> : <QuizzesView quizzes={plan.quizzes} />}
-    </div>
-  );
+  language: string;
+  level: string;
+  openIndex: number | null;
+  setOpenIndex: (i: number | null) => void;
+  completed: Set<number>;
+  streak: number;
+  onMarkDone: (index: number) => void;
+  onInteract: () => void;
 }
 
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
+function DashboardView(p: DashboardProps) {
+  const total = p.plan.concepts.length;
+  const doneCount = p.completed.size;
+  const progressPct = useMemo(
+    () => (total === 0 ? 0 : Math.round((doneCount / total) * 100)),
+    [doneCount, total],
+  );
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex items-center rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-        active
-          ? "bg-primary text-primary-foreground"
-          : "text-muted-foreground hover:bg-accent hover:text-foreground"
-      }`}
-    >
-      {children}
-    </button>
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-border bg-primary-soft/60 p-5">
+        <p className="text-xs font-medium uppercase tracking-wider text-primary">
+          Project summary
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-foreground">{p.plan.projectSummary}</p>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5 shadow-soft">
+        <div className="flex-1 min-w-[200px]">
+          <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+            <CheckCircle2 className="h-4 w-4 text-primary" />
+            Progress
+            <span className="text-muted-foreground">
+              {doneCount} / {total} completed
+            </span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-500"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        </div>
+        <div className="inline-flex items-center gap-2 rounded-full bg-[oklch(0.94_0.1_50)] px-4 py-2 text-sm font-medium text-[oklch(0.4_0.18_40)]">
+          <Flame className="h-4 w-4" />
+          Streak: {p.streak}
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {p.plan.concepts.map((concept, i) => (
+          <ConceptCard
+            key={i}
+            concept={concept}
+            index={i}
+            total={total}
+            language={p.language}
+            level={p.level}
+            isOpen={p.openIndex === i}
+            isDone={p.completed.has(i)}
+            onToggle={() => p.setOpenIndex(p.openIndex === i ? null : i)}
+            onMarkDone={() => p.onMarkDone(i)}
+            onInteract={p.onInteract}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
