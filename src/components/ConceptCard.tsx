@@ -242,25 +242,20 @@ export function ConceptCard(props: ConceptCardProps) {
             <p className="text-sm leading-relaxed text-foreground">
               {concept.miniTask.instruction}
             </p>
-            <div className="mt-3">
-              {!showSolution ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowSolution(true);
-                    onInteract();
-                  }}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
-                >
-                  <Lightbulb className="h-3.5 w-3.5" />
-                  Show solution
-                </button>
-              ) : (
-                <pre className="bg-code overflow-x-auto rounded-lg p-4 text-xs leading-relaxed">
-                  <code>{concept.miniTask.solution}</code>
-                </pre>
-              )}
-            </div>
+            <AnswerBox
+              kind="miniTask"
+              concept={concept}
+              language={props.language}
+              level={props.level}
+              onInteract={onInteract}
+              showSolution={showSolution}
+              onShowSolution={() => {
+                setShowSolution(true);
+                onInteract();
+              }}
+              solutionText={concept.miniTask.solution}
+              placeholder="Write your code here..."
+            />
           </Section>
 
           <SectionHeader emoji="🐞" title="Spot the Bug" />
@@ -269,31 +264,21 @@ export function ConceptCard(props: ConceptCardProps) {
             <pre className="bg-code mt-2 overflow-x-auto rounded-lg p-4 text-xs leading-relaxed">
               <code>{concept.spotTheBug.buggyCode}</code>
             </pre>
-            {!showBugFix ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setShowBugFix(true);
-                  onInteract();
-                }}
-                className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
-              >
-                Reveal answer
-              </button>
-            ) : (
-              <div className="mt-3 space-y-3">
-                <div className="rounded-lg bg-muted p-3 text-sm text-foreground">
-                  <span className="font-medium">The bug: </span>
-                  {concept.spotTheBug.explanation}
-                </div>
-                <div>
-                  <p className="mb-1 text-xs font-medium text-muted-foreground">Fixed version</p>
-                  <pre className="bg-code overflow-x-auto rounded-lg p-4 text-xs leading-relaxed">
-                    <code>{concept.spotTheBug.fixedCode}</code>
-                  </pre>
-                </div>
-              </div>
-            )}
+            <AnswerBox
+              kind="spotTheBug"
+              concept={concept}
+              language={props.language}
+              level={props.level}
+              onInteract={onInteract}
+              showSolution={showBugFix}
+              onShowSolution={() => {
+                setShowBugFix(true);
+                onInteract();
+              }}
+              solutionText={concept.spotTheBug.fixedCode}
+              extraExplanation={concept.spotTheBug.explanation}
+              placeholder="What's wrong? Fix or explain it..."
+            />
           </Section>
 
           <div className="flex items-center justify-end border-t border-border pt-4">
