@@ -62,26 +62,34 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --radius: 0.5rem;
+  /* Soft warm neutral palette with a single bold terracotta accent */
+  --background: oklch(0.985 0.008 80);
+  --foreground: oklch(0.22 0.02 50);
+  --card: oklch(0.995 0.005 80);
+  --card-foreground: oklch(0.22 0.02 50);
+  --popover: oklch(0.995 0.005 80);
+  --popover-foreground: oklch(0.22 0.02 50);
+  --primary: oklch(0.58 0.16 38);
+  --primary-foreground: oklch(0.99 0.005 80);
+  --primary-soft: oklch(0.94 0.04 50);
+  --secondary: oklch(0.95 0.012 70);
+  --secondary-foreground: oklch(0.28 0.02 50);
+  --muted: oklch(0.95 0.012 70);
+  --muted-foreground: oklch(0.5 0.02 60);
+  --accent: oklch(0.93 0.05 55);
+  --accent-foreground: oklch(0.3 0.05 40);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.99 0.005 80);
+  --border: oklch(0.9 0.015 70);
+  --input: oklch(0.92 0.012 70);
+  --ring: oklch(0.58 0.16 38);
+  --code-bg: oklch(0.27 0.02 50);
+  --code-fg: oklch(0.95 0.02 70);
+  --shadow-soft: 0 1px 2px oklch(0.4 0.05 50 / 0.06), 0 8px 24px oklch(0.4 0.05 50 / 0.06);
+  --font-serif: "Fraunces", "Iowan Old Style", "Apple Garamond", Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -137,8 +145,31 @@
     border-color: var(--color-border);
   }
 
+  html {
+    font-family: var(--font-sans);
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-feature-settings: "ss01", "cv11";
   }
+
+  h1, h2, h3 {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  pre, code, kbd {
+    font-family: var(--font-mono);
+  }
+}
+
+@layer utilities {
+  .font-serif { font-family: var(--font-serif); }
+  .font-mono { font-family: var(--font-mono); }
+  .shadow-soft { box-shadow: var(--shadow-soft); }
+  .bg-primary-soft { background-color: var(--primary-soft); }
+  .bg-code { background-color: var(--code-bg); color: var(--code-fg); }
 }
