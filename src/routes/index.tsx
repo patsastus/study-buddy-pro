@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, type FormEvent } from "react";
 import { Loader2, Sparkles, RotateCcw, Flame, CheckCircle2 } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { FileDropZone } from "@/components/FileDropZone";
 import { ConceptCard } from "@/components/ConceptCard";
 import { supabase } from "@/lib/supabase";
