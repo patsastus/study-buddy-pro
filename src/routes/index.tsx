@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, type FormEvent } from "react";
-import { Loader2, Sparkles, RotateCcw, Flame, CheckCircle2, Ban } from "lucide-react";
+import { Loader2, Sparkles, RotateCcw, Flame, CheckCircle2, Ban, ChevronDown } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { FileDropZone } from "@/components/FileDropZone";
 import { ConceptCard } from "@/components/ConceptCard";
@@ -379,29 +379,47 @@ function DashboardView(p: DashboardProps) {
 
 function ForbiddenSection({ items }: { items: string[] }) {
   const hasItems = items.length > 0;
+  const [open, setOpen] = useState(false);
   return (
     <div className="rounded-2xl border border-[oklch(0.78_0.16_30)]/40 bg-[oklch(0.96_0.06_60)] p-5 dark:border-[oklch(0.6_0.18_30)]/40 dark:bg-[oklch(0.28_0.07_40)]">
-      <div className="mb-2 flex items-center gap-2">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-2 text-left"
+      >
         <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[oklch(0.65_0.22_28)] text-white">
           <Ban className="h-4 w-4" />
         </div>
-        <p className="font-heading text-sm uppercase tracking-wider text-[oklch(0.45_0.2_28)] dark:text-[oklch(0.85_0.15_40)]">
+        <p className="flex-1 font-heading text-sm uppercase tracking-wider text-[oklch(0.45_0.2_28)] dark:text-[oklch(0.85_0.15_40)]">
           🚫 Forbidden / Constraints
+          {hasItems && (
+            <span className="ml-2 normal-case tracking-normal text-muted-foreground">
+              ({items.length})
+            </span>
+          )}
         </p>
-      </div>
-      {hasItems ? (
-        <ul className="mt-2 space-y-1.5 pl-1 text-sm text-foreground">
-          {items.map((item, i) => (
-            <li key={i} className="flex gap-2">
-              <span aria-hidden className="mt-0.5 text-[oklch(0.55_0.22_28)] dark:text-[oklch(0.8_0.15_35)]">⚠️</span>
-              <span className="leading-snug">{item}</span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="mt-1 text-sm text-muted-foreground">
-          No explicit restrictions found in the project description.
-        </p>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-[oklch(0.45_0.2_28)] transition-transform dark:text-[oklch(0.85_0.15_40)] ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && (
+        <div className="mt-3">
+          {hasItems ? (
+            <ul className="space-y-1.5 pl-1 text-sm text-foreground">
+              {items.map((item, i) => (
+                <li key={i} className="flex gap-2">
+                  <span aria-hidden className="mt-0.5 text-[oklch(0.55_0.22_28)] dark:text-[oklch(0.8_0.15_35)]">⚠️</span>
+                  <span className="leading-snug">{item}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No explicit restrictions found in the project description.
+            </p>
+          )}
+        </div>
       )}
     </div>
   );
