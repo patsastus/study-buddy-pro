@@ -15,10 +15,8 @@ type Level = "None" | "Beginner" | "Intermediate" | "Expert";
 
 function Index() {
   const [file, setFile] = useState<File | null>(null);
-  const [language, setLanguage] = useState("Modern C++20");
-  const [focus, setFocus] = useState(
-    "Memory ownership, inheritance, smart pointers (RAII), for IO, for concurrency, and comparisons to older alternatives",
-  );
+  const [language, setLanguage] = useState("");
+  const [focus, setFocus] = useState("");
   const [depth, setDepth] = useState<Depth>("Intermediate");
   const [level, setLevel] = useState<Level>("Intermediate");
 
