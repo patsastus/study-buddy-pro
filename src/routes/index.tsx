@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, type FormEvent } from "react";
-import { Loader2, Sparkles, RotateCcw, Flame, CheckCircle2 } from "lucide-react";
+import { Loader2, Sparkles, RotateCcw, Flame, CheckCircle2, Ban } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { FileDropZone } from "@/components/FileDropZone";
 import { ConceptCard } from "@/components/ConceptCard";
@@ -332,6 +332,8 @@ function DashboardView(p: DashboardProps) {
         <p className="mt-2 text-sm leading-relaxed text-foreground">{p.plan.projectSummary}</p>
       </div>
 
+      <ForbiddenSection items={p.plan.forbidden ?? []} />
+
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5 shadow-soft">
         <div className="flex-1 min-w-[200px]">
           <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
@@ -371,6 +373,36 @@ function DashboardView(p: DashboardProps) {
           />
         ))}
       </div>
+    </div>
+  );
+}
+
+function ForbiddenSection({ items }: { items: string[] }) {
+  const hasItems = items.length > 0;
+  return (
+    <div className="rounded-2xl border border-[oklch(0.78_0.16_30)]/40 bg-[oklch(0.96_0.06_60)] p-5 dark:border-[oklch(0.6_0.18_30)]/40 dark:bg-[oklch(0.28_0.07_40)]">
+      <div className="mb-2 flex items-center gap-2">
+        <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[oklch(0.65_0.22_28)] text-white">
+          <Ban className="h-4 w-4" />
+        </div>
+        <p className="font-heading text-sm uppercase tracking-wider text-[oklch(0.45_0.2_28)] dark:text-[oklch(0.85_0.15_40)]">
+          🚫 Forbidden / Constraints
+        </p>
+      </div>
+      {hasItems ? (
+        <ul className="mt-2 space-y-1.5 pl-1 text-sm text-foreground">
+          {items.map((item, i) => (
+            <li key={i} className="flex gap-2">
+              <span aria-hidden className="mt-0.5 text-[oklch(0.55_0.22_28)] dark:text-[oklch(0.8_0.15_35)]">⚠️</span>
+              <span className="leading-snug">{item}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-1 text-sm text-muted-foreground">
+          No explicit restrictions found in the project description.
+        </p>
+      )}
     </div>
   );
 }
