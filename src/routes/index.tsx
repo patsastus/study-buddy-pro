@@ -197,18 +197,18 @@ function SetupView(p: SetupProps) {
                 type="text"
                 value={p.language}
                 onChange={(e) => p.setLanguage(e.target.value)}
+                placeholder="e.g. C++20, Python, JavaScript"
                 className="input-base"
-                required
               />
             </Field>
 
-            <Field label="Learning focus">
+            <Field label="Learning focus (optional)">
               <textarea
                 value={p.focus}
                 onChange={(e) => p.setFocus(e.target.value)}
                 rows={3}
+                placeholder="e.g. memory management, APIs, concurrency..."
                 className="input-base resize-none"
-                required
               />
             </Field>
 
