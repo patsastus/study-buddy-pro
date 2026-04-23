@@ -2,3 +2,6 @@ project_id = "nrezeirhnqzjcnbgvknr"
 
 [functions.generateStudyPlan]
 verify_jwt = false
+
+[functions.reExplainConcept]
+verify_jwt = false
