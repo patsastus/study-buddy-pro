@@ -1,0 +1,4 @@
+project_id = "nrezeirhnqzjcnbgvknr"
+
+[functions.generate-study-plan]
+verify_jwt = false
