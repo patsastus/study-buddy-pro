@@ -18,6 +18,10 @@ const studyPlanSchema = {
   type: Type.OBJECT,
   properties: {
     projectSummary: { type: Type.STRING },
+    forbidden: {
+      type: Type.ARRAY,
+      items: { type: Type.STRING },
+    },
     concepts: {
       type: Type.ARRAY,
       items: {
@@ -67,7 +71,7 @@ const studyPlanSchema = {
       },
     },
   },
-  required: ["projectSummary", "concepts"],
+  required: ["projectSummary", "forbidden", "concepts"],
 };
 
 const buildPrompt = (
@@ -88,6 +92,12 @@ Student configuration:
 - Starting level: ${level}
 
 Produce ${conceptCount} concepts. Order them so each builds on the previous. Calibrate everything for a "${level}" learner.
+
+Also extract a "forbidden" array: explicit or strongly-implied constraints, restrictions, or forbidden elements stated in the brief (e.g. "Do not use STL", "No malloc/free", "No external libraries", "No recursion"). Rules:
+- Only include rules that are explicit or strongly implied in the text. DO NOT invent or guess.
+- Keep each item short and clear (max ~10 words), imperative phrasing (e.g. "Do not use STL containers").
+- Prefer fewer accurate items over many uncertain ones.
+- If there are no such restrictions, return an empty array [].
 
 For EACH concept include:
 - name: short title

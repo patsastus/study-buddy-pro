@@ -30,6 +30,7 @@ export interface StudyConcept {
 
 export interface StudyPlan {
   projectSummary: string;
+  forbidden: string[];
   concepts: StudyConcept[];
 }
 
