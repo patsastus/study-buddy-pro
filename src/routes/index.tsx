@@ -31,6 +31,10 @@ function Index() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!file || isLoading) return;
+    if (!language.trim()) {
+      setError("Please enter a programming language");
+      return;
+    }
     setError(null);
     setIsLoading(true);
 
