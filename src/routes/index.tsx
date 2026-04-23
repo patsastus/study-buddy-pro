@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, type FormEvent } from "react";
-import { Loader2, Sparkles, RotateCcw, Flame, CheckCircle2 } from "lucide-react";
+import { Loader2, Sparkles, RotateCcw, Flame, CheckCircle2, Ban } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { FileDropZone } from "@/components/FileDropZone";
 import { ConceptCard } from "@/components/ConceptCard";
@@ -331,6 +331,8 @@ function DashboardView(p: DashboardProps) {
         </p>
         <p className="mt-2 text-sm leading-relaxed text-foreground">{p.plan.projectSummary}</p>
       </div>
+
+      <ForbiddenSection items={p.plan.forbidden ?? []} />
 
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5 shadow-soft">
         <div className="flex-1 min-w-[200px]">
