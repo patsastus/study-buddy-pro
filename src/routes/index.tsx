@@ -15,10 +15,8 @@ type Level = "None" | "Beginner" | "Intermediate" | "Expert";
 
 function Index() {
   const [file, setFile] = useState<File | null>(null);
-  const [language, setLanguage] = useState("Modern C++20");
-  const [focus, setFocus] = useState(
-    "Memory ownership, inheritance, smart pointers (RAII), for IO, for concurrency, and comparisons to older alternatives",
-  );
+  const [language, setLanguage] = useState("");
+  const [focus, setFocus] = useState("");
   const [depth, setDepth] = useState<Depth>("Intermediate");
   const [level, setLevel] = useState<Level>("Intermediate");
 
@@ -33,6 +31,10 @@ function Index() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!file || isLoading) return;
+    if (!language.trim()) {
+      setError("Please enter a programming language");
+      return;
+    }
     setError(null);
     setIsLoading(true);
 
@@ -195,18 +197,18 @@ function SetupView(p: SetupProps) {
                 type="text"
                 value={p.language}
                 onChange={(e) => p.setLanguage(e.target.value)}
+                placeholder="e.g. C++20, Python, JavaScript"
                 className="input-base"
-                required
               />
             </Field>
 
-            <Field label="Learning focus">
+            <Field label="Learning focus (optional)">
               <textarea
                 value={p.focus}
                 onChange={(e) => p.setFocus(e.target.value)}
                 rows={3}
+                placeholder="e.g. memory management, APIs, concurrency..."
                 className="input-base resize-none"
-                required
               />
             </Field>
 
