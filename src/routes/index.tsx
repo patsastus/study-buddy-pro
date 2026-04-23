@@ -4,7 +4,6 @@ import { Loader2, Sparkles, RotateCcw } from "lucide-react";
 import { FileDropZone } from "@/components/FileDropZone";
 import { StudyPlanView } from "@/components/StudyPlanView";
 import { QuizzesView } from "@/components/QuizzesView";
-import { extractTextFromFile } from "@/lib/extract-text";
 import { supabase } from "@/lib/supabase";
 import type { StudyPlan } from "@/lib/study-plan-types";
 
@@ -36,20 +35,15 @@ function Index() {
     setIsLoading(true);
 
     try {
-      const documentText = await extractTextFromFile(file);
-      if (!documentText.trim()) {
-        throw new Error("Could not read any text from the file.");
-      }
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("language", language);
+      formData.append("focus", focus);
+      formData.append("depth", depth);
+      formData.append("level", level);
 
-      const { data, error: fnError } = await supabase.functions.invoke("generate-study-plan", {
-        body: {
-          documentText,
-          fileName: file.name,
-          language,
-          focus,
-          depth,
-          level,
-        },
+      const { data, error: fnError } = await supabase.functions.invoke("generateStudyPlan", {
+        body: formData,
       });
 
       if (fnError) {
