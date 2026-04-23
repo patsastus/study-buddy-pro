@@ -107,7 +107,7 @@ function Index() {
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <Sparkles className="h-4 w-4" />
             </div>
-            <span className="font-serif text-lg">Study Assistant</span>
+            <span className="font-heading text-lg">Study Assistant</span>
           </div>
           {plan && (
             <button
@@ -176,7 +176,7 @@ function SetupView(p: SetupProps) {
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-10 text-center">
-        <h1 className="font-serif text-4xl text-foreground">
+        <h1 className="font-heading text-4xl text-foreground">
           Turn any project brief into a personal study plan
         </h1>
         <p className="mt-3 text-base text-muted-foreground">
@@ -189,7 +189,7 @@ function SetupView(p: SetupProps) {
         <FileDropZone file={p.file} onFile={p.setFile} />
 
         <div className="rounded-2xl border border-border bg-card p-6 shadow-soft">
-          <h2 className="mb-5 font-serif text-lg text-foreground">Configure your plan</h2>
+          <h2 className="mb-5 font-heading text-lg text-foreground">Configure your plan</h2>
 
           <div className="space-y-5">
             <Field label="Programming language">

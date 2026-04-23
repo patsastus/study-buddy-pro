@@ -125,7 +125,7 @@ export function FileDropZone({ file, onFile }: Props) {
         <div className="pointer-events-none mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary-soft">
           <Upload className="h-6 w-6 text-primary" />
         </div>
-        <p className="pointer-events-none font-serif text-lg text-foreground">
+        <p className="pointer-events-none font-heading text-lg text-foreground">
           Drop your project brief here
         </p>
         <p className="pointer-events-none mt-1 text-sm text-muted-foreground">

@@ -118,7 +118,7 @@ export function ConceptCard(props: ConceptCardProps) {
           </span>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="font-serif text-lg text-foreground">{concept.name}</h3>
+              <h3 className="font-heading text-lg text-foreground">{concept.name}</h3>
               <span
                 className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${meta.cls}`}
               >
@@ -321,7 +321,7 @@ function SectionHeader({ emoji, title }: { emoji: string; title: string }) {
   return (
     <div className="flex items-center gap-2 border-t border-border pt-5">
       <span className="text-base">{emoji}</span>
-      <h4 className="font-serif text-base text-foreground">{title}</h4>
+      <h4 className="font-heading text-base text-foreground">{title}</h4>
     </div>
   );
 }
