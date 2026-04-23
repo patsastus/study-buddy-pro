@@ -242,25 +242,20 @@ export function ConceptCard(props: ConceptCardProps) {
             <p className="text-sm leading-relaxed text-foreground">
               {concept.miniTask.instruction}
             </p>
-            <div className="mt-3">
-              {!showSolution ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowSolution(true);
-                    onInteract();
-                  }}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
-                >
-                  <Lightbulb className="h-3.5 w-3.5" />
-                  Show solution
-                </button>
-              ) : (
-                <pre className="bg-code overflow-x-auto rounded-lg p-4 text-xs leading-relaxed">
-                  <code>{concept.miniTask.solution}</code>
-                </pre>
-              )}
-            </div>
+            <AnswerBox
+              kind="miniTask"
+              concept={concept}
+              language={props.language}
+              level={props.level}
+              onInteract={onInteract}
+              showSolution={showSolution}
+              onShowSolution={() => {
+                setShowSolution(true);
+                onInteract();
+              }}
+              solutionText={concept.miniTask.solution}
+              placeholder="Write your code here..."
+            />
           </Section>
 
           <SectionHeader emoji="🐞" title="Spot the Bug" />
@@ -269,31 +264,21 @@ export function ConceptCard(props: ConceptCardProps) {
             <pre className="bg-code mt-2 overflow-x-auto rounded-lg p-4 text-xs leading-relaxed">
               <code>{concept.spotTheBug.buggyCode}</code>
             </pre>
-            {!showBugFix ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setShowBugFix(true);
-                  onInteract();
-                }}
-                className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
-              >
-                Reveal answer
-              </button>
-            ) : (
-              <div className="mt-3 space-y-3">
-                <div className="rounded-lg bg-muted p-3 text-sm text-foreground">
-                  <span className="font-medium">The bug: </span>
-                  {concept.spotTheBug.explanation}
-                </div>
-                <div>
-                  <p className="mb-1 text-xs font-medium text-muted-foreground">Fixed version</p>
-                  <pre className="bg-code overflow-x-auto rounded-lg p-4 text-xs leading-relaxed">
-                    <code>{concept.spotTheBug.fixedCode}</code>
-                  </pre>
-                </div>
-              </div>
-            )}
+            <AnswerBox
+              kind="spotTheBug"
+              concept={concept}
+              language={props.language}
+              level={props.level}
+              onInteract={onInteract}
+              showSolution={showBugFix}
+              onShowSolution={() => {
+                setShowBugFix(true);
+                onInteract();
+              }}
+              solutionText={concept.spotTheBug.fixedCode}
+              extraExplanation={concept.spotTheBug.explanation}
+              placeholder="What's wrong? Fix or explain it..."
+            />
           </Section>
 
           <div className="flex items-center justify-end border-t border-border pt-4">
@@ -328,4 +313,151 @@ function SectionHeader({ emoji, title }: { emoji: string; title: string }) {
 
 function Section({ children }: { children: React.ReactNode }) {
   return <div>{children}</div>;
+}
+
+type Verdict = "correct" | "partial" | "incorrect";
+
+interface AnswerBoxProps {
+  kind: "miniTask" | "spotTheBug";
+  concept: StudyConcept;
+  language: string;
+  level: string;
+  onInteract: () => void;
+  showSolution: boolean;
+  onShowSolution: () => void;
+  solutionText: string;
+  extraExplanation?: string;
+  placeholder: string;
+}
+
+function AnswerBox(p: AnswerBoxProps) {
+  const [answer, setAnswer] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [verdict, setVerdict] = useState<Verdict | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleCheck() {
+    if (!answer.trim() || loading) return;
+    setLoading(true);
+    setError(null);
+    setVerdict(null);
+    setFeedback(null);
+    p.onInteract();
+    try {
+      const payload =
+        p.kind === "miniTask"
+          ? {
+              kind: "miniTask",
+              conceptName: p.concept.name,
+              language: p.language,
+              level: p.level,
+              userAnswer: answer,
+              instruction: p.concept.miniTask.instruction,
+              solution: p.concept.miniTask.solution,
+            }
+          : {
+              kind: "spotTheBug",
+              conceptName: p.concept.name,
+              language: p.language,
+              level: p.level,
+              userAnswer: answer,
+              buggyCode: p.concept.spotTheBug.buggyCode,
+              fixedCode: p.concept.spotTheBug.fixedCode,
+              bugExplanation: p.concept.spotTheBug.explanation,
+            };
+
+      const { data, error: fnError } = await supabase.functions.invoke("evaluateAnswer", {
+        body: payload,
+      });
+      if (fnError) throw fnError;
+      if (!data?.verdict) throw new Error("Empty response.");
+      setVerdict(data.verdict as Verdict);
+      setFeedback(data.feedback as string);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to evaluate.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const verdictMeta: Record<Verdict, { emoji: string; label: string; cls: string }> = {
+    correct: {
+      emoji: "👌",
+      label: "Nice, this works",
+      cls: "border-primary/40 bg-primary-soft text-foreground",
+    },
+    partial: {
+      emoji: "🟡",
+      label: "Almost there",
+      cls: "border-[oklch(0.7_0.15_85)]/40 bg-[oklch(0.94_0.1_85)]/40 text-foreground",
+    },
+    incorrect: {
+      emoji: "🔁",
+      label: "Not quite",
+      cls: "border-destructive/30 bg-destructive/10 text-foreground",
+    },
+  };
+
+  return (
+    <div className="mt-3 space-y-3">
+      <textarea
+        value={answer}
+        onChange={(e) => setAnswer(e.target.value)}
+        rows={5}
+        spellCheck={false}
+        placeholder={p.placeholder}
+        className="w-full rounded-lg border border-border bg-code px-3 py-2 font-mono text-xs leading-relaxed text-[var(--code-fg)] outline-none focus:border-primary"
+      />
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={handleCheck}
+          disabled={loading || !answer.trim()}
+          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+          Check answer
+        </button>
+        {!p.showSolution && (
+          <button
+            type="button"
+            onClick={p.onShowSolution}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
+          >
+            <Lightbulb className="h-3.5 w-3.5" />
+            Show solution
+          </button>
+        )}
+      </div>
+
+      {error && <p className="text-xs text-destructive">{error}</p>}
+
+      {verdict && feedback && (
+        <div className={`rounded-lg border p-3 text-sm ${verdictMeta[verdict].cls}`}>
+          <div className="mb-1 text-xs font-medium">
+            {verdictMeta[verdict].emoji} {verdictMeta[verdict].label}
+          </div>
+          <p className="whitespace-pre-wrap">{feedback}</p>
+        </div>
+      )}
+
+      {p.showSolution && (
+        <div className="space-y-2">
+          {p.extraExplanation && (
+            <div className="rounded-lg bg-muted p-3 text-sm text-foreground">
+              <span className="font-medium">The bug: </span>
+              {p.extraExplanation}
+            </div>
+          )}
+          <p className="text-xs font-medium text-muted-foreground">
+            {p.kind === "miniTask" ? "Example solution" : "Fixed version"}
+          </p>
+          <pre className="bg-code overflow-x-auto rounded-lg p-4 text-xs leading-relaxed">
+            <code>{p.solutionText}</code>
+          </pre>
+        </div>
+      )}
+    </div>
+  );
 }
