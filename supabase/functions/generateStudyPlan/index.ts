@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
     const level = String(form.get("level") ?? "Intermediate");
 
     if (!(file instanceof File)) return jsonResponse({ error: "Missing file." }, 400);
-    if (!language || !focus) return jsonResponse({ error: "Missing required fields." }, 400);
+    if (!language) return jsonResponse({ error: "Missing required fields." }, 400);
 
     const ai = new GoogleGenAI({ apiKey });
 
@@ -196,6 +196,7 @@ Deno.serve(async (req) => {
     } catch {
       return jsonResponse({ error: "Malformed JSON from Gemini." }, 502);
     }
+    if (!Array.isArray(plan?.forbidden)) plan.forbidden = [];
 
     ai.files.delete({ name: uploaded.name! }).catch(() => {});
 
