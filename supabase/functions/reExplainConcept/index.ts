@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import { GoogleGenAI } from "npm:@google/genai@^1.0.0";
+import { AdapterError, generateText } from "../_shared/llm.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -36,17 +36,12 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
 
   try {
-    const apiKey = Deno.env.get("GEMINI_API_KEY");
-    if (!apiKey) return jsonResponse({ error: "GEMINI_API_KEY is not configured" }, 500);
-
     const body = (await req.json()) as ReExplainBody;
     const { conceptName, originalExplanation, language, level, style } = body;
 
     if (!conceptName || !style || !styleInstruction[style]) {
       return jsonResponse({ error: "Missing or invalid fields." }, 400);
     }
-
-    const ai = new GoogleGenAI({ apiKey });
 
     const prompt = `You are an expert ${language} tutor helping a "${level}" level learner.
 
@@ -61,16 +56,17 @@ ${styleInstruction[style]}
 
 Return only the new explanation as plain text. No markdown headings, no preface.`;
 
-    const result = await ai.models.generateContent({
+    const explanation = await generateText({
+      provider: "gemini",
       model: "gemini-2.5-flash",
-      contents: prompt,
+      prompt,
     });
 
-    const text = result.text?.trim();
-    if (!text) return jsonResponse({ error: "Empty response from Gemini." }, 502);
-
-    return jsonResponse({ explanation: text });
+    return jsonResponse({ explanation });
   } catch (e) {
+    if (e instanceof AdapterError) {
+      return jsonResponse({ error: e.message, ...(e.detail ? { detail: e.detail } : {}) }, e.status);
+    }
     console.error("reExplainConcept error", e);
     const message = e instanceof Error ? e.message : "Unknown error";
     return jsonResponse({ error: message }, 500);

@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
-import { GoogleGenAI, Type, createUserContent, createPartFromUri } from "npm:@google/genai@^1.0.0";
+import { Type } from "npm:@google/genai@^1.0.0";
+import { AdapterError, generateStructured } from "../_shared/llm.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -121,9 +122,6 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
 
   try {
-    const apiKey = Deno.env.get("GEMINI_API_KEY");
-    if (!apiKey) return jsonResponse({ error: "GEMINI_API_KEY is not configured" }, 500);
-
     const form = await req.formData();
     const file = form.get("file");
     const language = String(form.get("language") ?? "");
@@ -134,74 +132,22 @@ Deno.serve(async (req) => {
     if (!(file instanceof File)) return jsonResponse({ error: "Missing file." }, 400);
     if (!language) return jsonResponse({ error: "Missing required fields." }, 400);
 
-    const ai = new GoogleGenAI({ apiKey });
-
-    const uploaded = await ai.files.upload({
-      file,
-      config: { mimeType: file.type || "application/octet-stream", displayName: file.name },
+    const plan = await generateStructured({
+      provider: "gemini",
+      model: "gemini-2.5-flash",
+      modelFallbacks: ["gemini-2.5-flash-lite"],
+      prompt: buildPrompt(language, focus, depth, level),
+      schema: studyPlanSchema,
+      attachment: { file },
     });
 
-    if (!uploaded.uri || !uploaded.mimeType) {
-      return jsonResponse({ error: "File upload to Gemini failed." }, 502);
-    }
-
-    const contents = createUserContent([
-      createPartFromUri(uploaded.uri, uploaded.mimeType),
-      buildPrompt(language, focus, depth, level),
-    ]);
-
-    const generationConfig = {
-      responseMimeType: "application/json",
-      responseSchema: studyPlanSchema,
-    };
-
-    const modelChain = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
-    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-    let result: any;
-    let lastError: unknown;
-    outer: for (const model of modelChain) {
-      for (let attempt = 0; attempt < 3; attempt++) {
-        try {
-          result = await ai.models.generateContent({
-            model,
-            contents,
-            config: generationConfig,
-          });
-          lastError = undefined;
-          break outer;
-        } catch (err: any) {
-          lastError = err;
-          const status = err?.status ?? err?.response?.status;
-          if (status !== 503 && status !== 429 && status !== 500) throw err;
-          await sleep(600 * Math.pow(2, attempt));
-        }
-      }
-    }
-
-    if (lastError) {
-      const message = lastError instanceof Error ? lastError.message : String(lastError);
-      return jsonResponse(
-        { error: "The AI model is overloaded right now. Please try again in a moment.", detail: message },
-        503,
-      );
-    }
-
-    const text = result.text;
-    if (!text) return jsonResponse({ error: "Empty response from Gemini." }, 502);
-
-    let plan: any;
-    try {
-      plan = JSON.parse(text);
-    } catch {
-      return jsonResponse({ error: "Malformed JSON from Gemini." }, 502);
-    }
     if (!Array.isArray(plan?.forbidden)) plan.forbidden = [];
-
-    ai.files.delete({ name: uploaded.name! }).catch(() => {});
 
     return jsonResponse({ plan });
   } catch (e) {
+    if (e instanceof AdapterError) {
+      return jsonResponse({ error: e.message, ...(e.detail ? { detail: e.detail } : {}) }, e.status);
+    }
     console.error("generateStudyPlan error", e);
     const message = e instanceof Error ? e.message : "Unknown error";
     return jsonResponse({ error: message }, 500);
