@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import { GoogleGenAI } from "npm:@google/genai@^1.0.0";
+import { AdapterError, generateText } from "../_shared/llm.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,10 +20,8 @@ interface EvaluateBody {
   language: string;
   level: string;
   userAnswer: string;
-  // miniTask
   instruction?: string;
   solution?: string;
-  // spotTheBug
   buggyCode?: string;
   fixedCode?: string;
   bugExplanation?: string;
@@ -34,9 +32,6 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
 
   try {
-    const apiKey = Deno.env.get("GEMINI_API_KEY");
-    if (!apiKey) return jsonResponse({ error: "GEMINI_API_KEY is not configured" }, 500);
-
     const body = (await req.json()) as EvaluateBody;
     const { kind, conceptName, language, level, userAnswer } = body;
 
@@ -102,20 +97,18 @@ Return STRICT JSON only, no markdown, with this shape:
 {"verdict":"correct|partial|incorrect","feedback":"1-3 short sentences with concrete guidance, friendly tone"}`;
     }
 
-    const ai = new GoogleGenAI({ apiKey });
-    const result = await ai.models.generateContent({
+    const text = await generateText({
+      provider: "gemini",
       model: "gemini-2.5-flash",
-      contents: prompt,
+      prompt,
     });
 
-    const text = result.text?.trim() ?? "";
     // Strip code fences if any
     const cleaned = text.replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
     let parsed: { verdict?: string; feedback?: string } = {};
     try {
       parsed = JSON.parse(cleaned);
     } catch {
-      // Fallback: best-effort
       parsed = { verdict: "partial", feedback: text || "Couldn't parse a verdict — keep iterating!" };
     }
 
@@ -126,6 +119,9 @@ Return STRICT JSON only, no markdown, with this shape:
 
     return jsonResponse({ verdict, feedback });
   } catch (e) {
+    if (e instanceof AdapterError) {
+      return jsonResponse({ error: e.message, ...(e.detail ? { detail: e.detail } : {}) }, e.status);
+    }
     console.error("evaluateAnswer error", e);
     const message = e instanceof Error ? e.message : "Unknown error";
     return jsonResponse({ error: message }, 500);
