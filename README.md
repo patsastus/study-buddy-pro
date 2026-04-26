@@ -1,3 +1,4 @@
+<!-- branch-check: commit made to verify active branch (expected: backend-refactor) -->
 # Study buddy: a first adventure in Lovable coding
 
 For the first **Hive Helsinki AI Hackathon** on April 22nd, 2026, we made this thing to help break down a study project into concepts to learn. It was the first time using Lovable for everyone, and it was an interesting change from coding stuff from scratch like we usually do.
